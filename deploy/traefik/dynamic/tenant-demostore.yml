@@ -1,0 +1,36 @@
+{
+  "http": {
+    "routers": {
+      "site-demostore": {
+        "rule": "(Host(`localhost`) && PathPrefix(`/demostore`)) || Host(`demostore.localhost`)",
+        "priority": 1000,
+        "service": "site-demostore-service",
+        "entryPoints": [
+          "web"
+        ]
+      },
+      "site-demostore-secure": {
+        "rule": "(Host(`localhost`) && PathPrefix(`/demostore`)) || Host(`demostore.localhost`)",
+        "priority": 1000,
+        "service": "site-demostore-service",
+        "entryPoints": [
+          "websecure"
+        ],
+        "tls": {
+          "certResolver": "letsencrypt"
+        }
+      }
+    },
+    "services": {
+      "site-demostore-service": {
+        "loadBalancer": {
+          "servers": [
+            {
+              "url": "http://site-demostore:3000"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

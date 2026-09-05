@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v3
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic
+    networks:
+      - tenant-net
+
+  control-db:
+    image: postgres:16-alpine
+    container_name: control-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: saas_control
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5434:5432"
+    volumes:
+      - control_db_data:/var/lib/postgresql/data
+    networks:
+      - control-net
+
+  tenant-db:
+    image: postgres:16-alpine
+    container_name: tenant-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: tenantdbpassword
+    ports:
+      - "5435:5432"
+    volumes:
+      - tenant_db_data:/var/lib/postgresql/data
+    networks:
+      - tenant-net
+
+  tenant-mysql:
+    image: mysql:8.0
+    container_name: tenant-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: tenantdbpassword
+      MYSQL_DATABASE: mysql
+    ports:
+      - "5433:3306"
+    volumes:
+      - tenant_mysql_data:/var/lib/mysql
+    networks:
+      - tenant-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - control-net
+
+  control-plane:
+    build:
+      context: ../services/control-plane
+      dockerfile: Dockerfile
+    container_name: control-plane
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: postgresql://postgres:postgrespassword@control-db:5432/saas_control
+      REDIS_URL: redis://redis:6379
+      TENANT_DB_ADMIN_URL: mysql://root:tenantdbpassword@tenant-mysql:3306/mysql
+      PROXY_DYNAMIC_DIR: /etc/traefik/dynamic
+      ROOT_DOMAIN: localhost
+      PAYMENT_WEBHOOK_SECRET: whsec_master_saas_secret_key_123
+      NEXT_PUBLIC_BASE_URL: http://localhost:3001
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    ports:
+      - "3001:3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.control-plane.entrypoints=web"
+      - "traefik.http.routers.control-plane.rule=PathPrefix(`/api`) || PathPrefix(`/dashboard`) || PathPrefix(`/admin`) || PathPrefix(`/checkout`) || PathPrefix(`/order`) || PathPrefix(`/_next`) || PathPrefix(`/login`) || Path(`/`)"
+      - "traefik.http.services.control-plane.loadbalancer.server.port=3000"
+    depends_on:
+      - control-db
+      - redis
+    networks:
+      - control-net
+      - tenant-net
+
+  provision-worker:
+    build:
+      context: ../services/control-plane
+      dockerfile: Dockerfile
+    container_name: provision-worker
+    restart: unless-stopped
+    command: ["npx", "tsx", "src/scripts/start-worker.ts"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgrespassword@control-db:5432/saas_control
+      REDIS_URL: redis://redis:6379
+      TENANT_DB_ADMIN_URL: mysql://root:tenantdbpassword@tenant-mysql:3306/mysql
+      TENANT_CONTAINER_DB_HOST: tenant-mysql
+      TENANT_CONTAINER_DB_PORT: "3306"
+      PROXY_DYNAMIC_DIR: /etc/traefik/dynamic
+      DOCKER_NETWORK: tenant-net
+      ROOT_DOMAIN: localhost
+      DEFAULT_TENANT_IMAGE: topup-template:1.0.0
+      WORKER_CONCURRENCY: "2"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/dynamic:/etc/traefik/dynamic
+    depends_on:
+      - control-db
+      - redis
+      - tenant-db
+      - tenant-mysql
+    networks:
+      - control-net
+      - tenant-net
+
+networks:
+  control-net:
+    name: control-net
+    driver: bridge
+  tenant-net:
+    name: tenant-net
+    driver: bridge
+
+volumes:
+  control_db_data:
+  tenant_db_data:
+  tenant_mysql_data:
+  redis_data:

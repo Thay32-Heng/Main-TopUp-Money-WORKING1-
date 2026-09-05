@@ -35,3 +35,7 @@ admin_credentials.txt
 
 # Backup archives
 angkor-topup-hub.tar.gz
+
+# Cloudflare Wrangler
+.wrangler
+

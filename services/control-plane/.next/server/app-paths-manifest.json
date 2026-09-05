@@ -1,0 +1,21 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/api/checkout/route": "app/api/checkout/route.js",
+  "/api/healthz/route": "app/api/healthz/route.js",
+  "/api/provision/retry/route": "app/api/provision/retry/route.js",
+  "/api/webhooks/payment/route": "app/api/webhooks/payment/route.js",
+  "/checkout/page": "app/checkout/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/order/[orderId]/provisioning/page": "app/order/[orderId]/provisioning/page.js",
+  "/page": "app/page.js",
+  "/provisioning/[jobId]/page": "app/provisioning/[jobId]/page.js",
+  "/api/check-slug/route": "app/api/check-slug/route.js",
+  "/api/admin/metrics/route": "app/api/admin/metrics/route.js",
+  "/api/orders/[id]/route": "app/api/orders/[id]/route.js",
+  "/api/provision/[jobId]/route": "app/api/provision/[jobId]/route.js",
+  "/api/provision/[jobId]/retry/route": "app/api/provision/[jobId]/retry/route.js",
+  "/api/sites/check-slug/route": "app/api/sites/check-slug/route.js",
+  "/api/sites/route": "app/api/sites/route.js",
+  "/api/sites/[slug]/route": "app/api/sites/[slug]/route.js"
+}

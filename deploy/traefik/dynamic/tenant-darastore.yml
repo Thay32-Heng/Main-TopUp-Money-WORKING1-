@@ -1,0 +1,36 @@
+{
+  "http": {
+    "routers": {
+      "site-darastore": {
+        "rule": "(Host(`localhost`) && PathPrefix(`/darastore`)) || Host(`darastore.localhost`)",
+        "priority": 1000,
+        "service": "site-darastore-service",
+        "entryPoints": [
+          "web"
+        ]
+      },
+      "site-darastore-secure": {
+        "rule": "(Host(`localhost`) && PathPrefix(`/darastore`)) || Host(`darastore.localhost`)",
+        "priority": 1000,
+        "service": "site-darastore-service",
+        "entryPoints": [
+          "websecure"
+        ],
+        "tls": {
+          "certResolver": "letsencrypt"
+        }
+      }
+    },
+    "services": {
+      "site-darastore-service": {
+        "loadBalancer": {
+          "servers": [
+            {
+              "url": "http://site-darastore:3000"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

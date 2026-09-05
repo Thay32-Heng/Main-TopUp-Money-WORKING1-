@@ -1,0 +1,36 @@
+{
+  "http": {
+    "routers": {
+      "site-luckytopup2026": {
+        "rule": "(Host(`localhost`) && PathPrefix(`/luckytopup2026`)) || Host(`luckytopup2026.localhost`)",
+        "priority": 1000,
+        "service": "site-luckytopup2026-service",
+        "entryPoints": [
+          "web"
+        ]
+      },
+      "site-luckytopup2026-secure": {
+        "rule": "(Host(`localhost`) && PathPrefix(`/luckytopup2026`)) || Host(`luckytopup2026.localhost`)",
+        "priority": 1000,
+        "service": "site-luckytopup2026-service",
+        "entryPoints": [
+          "websecure"
+        ],
+        "tls": {
+          "certResolver": "letsencrypt"
+        }
+      }
+    },
+    "services": {
+      "site-luckytopup2026-service": {
+        "loadBalancer": {
+          "servers": [
+            {
+              "url": "http://site-luckytopup2026:3000"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
